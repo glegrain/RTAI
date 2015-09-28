@@ -50,9 +50,9 @@ u16 readAD(void) {
 	char result_high = inb(AD_HIGH_BYTE);
 	char result_status = inb(AD_STATUS_REGISTER);		
 	u16 result = (result_high<<8) + (result_low>>3);
-	//printk("valeur= %d\n", (result_high<<8) + (result_low>>3));
-	//printk("channelAD= %d\n", result_low & 0x7); // on recup les 3 LSB	
-        //printk("status register= 0x%x\n", result_status);
+	printk("valeur= %d\n", (result_high<<8) + (result_low>>3));
+	printk("channelAD= %d\n", result_low & 0x7); // on recup les 3 LSB	
+        printk("status register= 0x%x\n", result_status);
 	return result;
 }//ReadAD
 

@@ -16,6 +16,10 @@ static int test_init(void) {
         ADRangeSelect(1,8);
 	double res = readAD();
 	printk("res = %d\n", res);
+	res = readAD();
+	printk("res = %d\n", res);
+	res = readAD();
+	printk("res = %d\n", res);
 	return(0);
 }
 

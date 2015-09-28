@@ -1,5 +1,5 @@
 # Makefile pour 3718
-obj-m := 3718.o testADC.o
+obj-m := 3718.o 3712.o test.o
 
 PATH := /opt/x86_64/gcc/gcc-3.4.4/bin:$(PATH)
 KIT = arcom10.esiee.fr

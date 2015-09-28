@@ -1,0 +1,9 @@
+*.o
+*.ko
+*.cmd
+*.flags
+*.mod.c
+*~
+*.swp
+*.tmp
+

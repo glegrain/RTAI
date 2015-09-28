@@ -53,7 +53,7 @@ u16 readAD(void) {
 	//printk("valeur= %d\n", (result_high<<8) + (result_low>>3));
 	//printk("channelAD= %d\n", result_low & 0x7); // on recup les 3 LSB	
         //printk("status register= 0x%x\n", result_status);
-	return 0;
+	return result;
 }//ReadAD
 
 void exit_3718(void) {

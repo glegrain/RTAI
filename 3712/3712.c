@@ -64,7 +64,7 @@ void setDA(int channel, int value_volts) {
 		setDA_raw(channel, 0xFFF);
 		return;
 	}
-	if (value_volts <= 10) {
+	if (value_volts <= -10) {
 		setDA_raw(channel, 0x000);
 		return;
 	}

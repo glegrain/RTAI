@@ -20,3 +20,4 @@ clean:
 send:
 	scp *.ko runarcom arcom@$(KIT):/home/arcom
 	ssh arcom@$(KIT)
+	chmod +x runarcom

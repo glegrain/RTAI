@@ -31,26 +31,33 @@ static int init_3718(void) {
 
 void setChannel(int in_channel) {
 	//on ne scan pas, les 4 msb = stop scan, les 4 lsb = start scan
-	outb((in_channel<<4) + in_channel , MUX_CTRL);
+	char value = (in_channel<<4) + in_channel;
+	//printk("channel selectesfd: 0x%x (%d)\n", value);
+	outb(value , MUX_CTRL);
 	outb(0x1,BASE);
 
 }//SetChanel
 
 void ADRangeSelect(int channel, int range) {
+	setChannel(channel);
 	// on passe au channel suivant lorsqu'on écrit dans AD_RANGE_CTRL
 	outb(range, AD_RANGE_CTRL);
 	//on reset channel
-	setChannel(channel);
+	//setChannel(channel);
 
 }//ADRangeSelect
 
 u16 readAD(void) {
-	printk("\n\n READ \n");
-	char result_low = inb(AD_LOW_BYTE_AND_CH);
-	char result_high = inb(AD_HIGH_BYTE);
-	char result_status = inb(AD_STATUS_REGISTER);		
-	u16 result = (result_high<<8) + (result_low>>3);
-	printk("valeur= %d\n", (result_high<<8) + (result_low>>3));
+	printk("\n\n READ\n");
+	u8 result_low = inb(AD_LOW_BYTE_AND_CH);
+	u8 result_high = inb(AD_HIGH_BYTE);
+	u8 result_status = inb(AD_STATUS_REGISTER);		
+	u16 result =  0x0FFF & ((result_high<<4) + (result_low>>4));
+	printk("LOW = 0x%x\n", result_low);
+	printk("LOW_D7D4 = 0x%x\n", result_low>>4);
+	printk("HIGH = 0x%x\n", result_high);
+	printk("regToRead2 = 0x%x\n", result);
+	printk("valeur= %d\n", result); 
 	printk("channelAD= %d\n", result_low & 0x7); // on recup les 3 LSB	
         printk("status register= 0x%x\n", result_status);
 	return result;

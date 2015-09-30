@@ -2,7 +2,7 @@
 obj-m := 3718.o 3712.o test.o
 
 PATH := /opt/x86_64/gcc/gcc-3.4.4/bin:$(PATH)
-KIT = arcom10.esiee.fr
+KIT = arcom3.esiee.fr
 CURRENT = 2.6.16.14-arcom1
 KDIR = /usr/lib/arcom/lib/modules/${CURRENT}/build
 PWD = $(shell pwd)
@@ -19,5 +19,5 @@ clean:
 	-rm -r .tmp*
 send:
 	scp *.ko runarcom arcom@$(KIT):/home/arcom
+	ssh arcom@$(KIT) 'chmod +x runarcom'
 	ssh arcom@$(KIT)
-	chmod +x runarcom

@@ -14,7 +14,7 @@
 static int test_init(void) {
 	
 	// write 3 V to channel 1 using DAC
-	setDA(1,3);
+	setDA(1,-9);
 	// write 7 V to channel 2 using DAC
 	setDA(2,-7);
 
@@ -25,6 +25,8 @@ static int test_init(void) {
 	////Confgure ADC to use channel 2 +/-10V
 	//ADRangeSelect(2,8);
 	//printk("res = %d\n", readAD());
+	ADRangeSelect(1,8);
+	printk("res2 = %d\n", readAD_mVolt());
 
 	return(0);
 }

@@ -27,6 +27,8 @@
 void setChannel(int in_channel);
 void ADRangeSelect(int channel, int range);
 u16 readAD(void);
+double readAD_mVolt(void);
+
 
 static int init_3718(void) { 
 
@@ -90,7 +92,6 @@ void ADRangeSelect(int channel, int range) {
 }//ADRangeSelect
 
 u16 readAD(void) {
-	printk("\n\n READ2\n");
 
 	// STATUS REGISTER
 	// D7: End Of Conversion: 1 Busy, 0 Ready for next conversionm data from the previous conversion is available in the A/D register
@@ -104,17 +105,22 @@ u16 readAD(void) {
 	u8 result_high = inb(AD_HIGH_BYTE);
 			
 	u16 result =  0x0FFF & ((result_high<<4) + (result_low>>4));
-	printk("LOW = 0x%x\n", result_low);
+	/*printk("LOW = 0x%x\n", result_low);
 	printk("LOW_D7D4 = 0x%x\n", result_low>>4);
 	printk("HIGH = 0x%x\n", result_high);
 	printk("regToRead = 0x%x\n", result);
 	printk("valeur= %d\n", result); 
 	printk("channelAD= %d\n", result_low & 0x7); // on recup les 3 LSB	
         printk("status register= 0x%x\n", status_register);
-	printk("status_register_int = %d\n", status_register_int);
+	printk("status_register_int = %d\n", status_register_int);*/
 	return result;
 }//ReadAD
 
+double readAD_mVolt(void) {
+
+	return ((readAD()-2048)*1000)/205;
+
+}
 void exit_3718(void) {
   printk("uninstall 3718 driver\n");
 }
@@ -125,6 +131,7 @@ EXPORT_SYMBOL(exit_3718);
 EXPORT_SYMBOL(setChannel);
 EXPORT_SYMBOL(ADRangeSelect);
 EXPORT_SYMBOL(readAD);
+EXPORT_SYMBOL(readAD_mVolt);
 
 
 module_init(init_3718);

@@ -1,7 +1,9 @@
-// 0.0.0 2015-09-14
+// 0.0.3 2015-09-30
 // 3712.h
 // Guillaume Legrain <guillaume.legrain@edu.esiee.fr>
 // Florian Martin <florian.martin@edu.esiee.fr>
+//
+// PC104 Digital-to-Analog  ADVANTECH PCM-3712 Driver
 
 #ifndef __3712__
 #define __3712__

@@ -1,7 +1,12 @@
-// 0.0.2 2015-09-14
+// 0.0.3 2015-09-30
+// 3718.c
+// Guillaume Legrain <guillaume.legrain@edu.esiee.fr>
+// Florian Martin <florian.martin@edu.esiee.fr>
+//
+// PC104 Analog-to-Digital  ADVANTECH PCM-3718 Driver
 
-#include<linux/init.h>
-#include<linux/module.h>
+#include <linux/init.h>
+#include <linux/module.h>
 
 #include <asm/io.h>
 #include <linux/pci.h>
@@ -9,19 +14,23 @@
 #include <rtai_sched.h>
 #include <rtai_fifos.h>
 
-/* define pour gestion PCI CARTE ADVANTECH 3718HG PC104 */
+// BASE register address for ADVANTECH PCM-3718HG PC1-4
+// Should match hardware jumper settings
 #define BASE 0x320
-#define AD_RANGE_CTRL BASE+1       //A utiliser dans ADRangeselect  
-#define MUX_CTRL BASE+2            //A utiliser dans setChannel
-#define CONTROL      BASE+9
-#define PACER        BASE+10
-#define COUNTER0     BASE+12
-#define COUNTER1     BASE+13
-#define COUNTER2     BASE+14
-#define COUNTER_CTRL BASE+15
 
-#define AD_LOW_BYTE_AND_CH BASE+0  //A utiliser dans ADRead
-#define AD_HIGH_BYTE BASE+1        //A utiliser dans ADRead
+// Write registers
+#define AD_RANGE_CTRL BASE+1
+#define MUX_CTRL      BASE+2
+#define CONTROL       BASE+9
+#define PACER         BASE+10
+#define COUNTER0      BASE+12
+#define COUNTER1      BASE+13
+#define COUNTER2      BASE+14
+#define COUNTER_CTRL  BASE+15
+
+// Read registers
+#define AD_LOW_BYTE_AND_CH BASE+0
+#define AD_HIGH_BYTE       BASE+1
 #define AD_STATUS_REGISTER BASE+8
 
 void setChannel(int in_channel);
@@ -30,24 +39,28 @@ u16 readAD(void);
 double readAD_mVolt(void);
 
 
+/**
+ * Driver initilisation
+ */
 static int init_3718(void) { 
 
 	printk("install 3718 driver\n");
 	
-        // CONTROL REGISTER
-        // D7: INTE: Enable/Disable interrupts
-        // D6-4 Enable/Disable interrupt INL0, INL1, INL3
-        // D3: N/A
-        // D2: DMAE: Enable DMA
-        // D1-D0: Trigger source: Sfwr: 0X, Ext: 10, Pacer: 11  	
+  // CONTROL REGISTER
+  // D7: INTE: Enable/Disable interrupts
+  // D6-4 Enable/Disable interrupt INL0, INL1, INL3
+  // D3: N/A
+  // D2: DMAE: Enable DMA
+  // D1-D0: Trigger source: Sfwr: 0X, Ext: 10, Pacer: 11
 	outb(0xFF,CONTROL);
 	
-	// Program counters 1 and 2 as pacers to generate A/D conversions trigger pulses
+	// Program counters 1 and 2 as pacers
+  // to generate A/D conversions trigger pulses
 	// 25kHz
 
-  	// PACER ENABLE REGISTER
-        // TC0: Enable/Disable pacer
-        outb(0x00, PACER);
+  // PACER ENABLE REGISTER
+  // TC0: Enable/Disable pacer
+   outb(0x00, PACER);
 	
 	// COUNTER CONTROL
 	// Set Counter 1 to mode 3
@@ -73,20 +86,32 @@ static int init_3718(void) {
 
 }//init_3718
 
+/**
+ * Set channel to perform A/D conversion
+ * @arg int channel (0-3)
+ */
 void setChannel(int in_channel) {
-	//on ne scan pas, les 4 msb = stop scan, les 4 lsb = start scan
+  // Disable channel scanning by setting the start and stop channel
+  // to the same value
+  // 4 MSB = scan stop; 4 LSB = start scan
 	char value = (in_channel<<4) + in_channel;
-	//printk("channel selectesfd: 0x%x (%d)\n", value);
 	outb(value , MUX_CTRL);
+  // Write anything to BASE to trigger A/D conversion
 	outb(0x1,BASE);
 
 }//SetChanel
 
+/**
+ * Set input range and channel
+ * @arg int channel (0-3)
+ * @arg int range see datasheet for values; 8 for +/- 10V
+ */
 void ADRangeSelect(int channel, int range) {
 	setChannel(channel);
 	// on passe au channel suivant lorsqu'on écrit dans AD_RANGE_CTRL
 	outb(range, AD_RANGE_CTRL);
 	//on reset channel
+  // reset channel //TODO: test on order of setChannel
 	//setChannel(channel);
 
 }//ADRangeSelect
@@ -94,11 +119,17 @@ void ADRangeSelect(int channel, int range) {
 u16 readAD(void) {
 
 	// STATUS REGISTER
-	// D7: End Of Conversion: 1 Busy, 0 Ready for next conversionm data from the previous conversion is available in the A/D register
+	// D7: End Of Conversion:
+  //   1 Busy,
+  //   0 Ready for next conversion data from the previous
+  //     conversion is available in the A/D register
 	// D6: N/A
 	// D5: MUX: 0 8 Diff channels; 1 16 Single Ended Channels
 	// D4: INT Data valid //TODO
- 	// D3-D0: CN3-CN0 When EOC = 0, these status bits contain the channel number of the next channel to be converted.
+  // D3-D0: CN3-CN0 When EOC = 0,
+  //
+  // these status bits contain the channel number of the next
+  // channel to be converted.
 	u8 status_register = inb(AD_STATUS_REGISTER);
 	int status_register_int = 0x00 | (status_register >> 4); // TODO: truncate	
 	u8 result_low = inb(AD_LOW_BYTE_AND_CH);
@@ -111,7 +142,7 @@ u16 readAD(void) {
 	printk("regToRead = 0x%x\n", result);
 	printk("valeur= %d\n", result); 
 	printk("channelAD= %d\n", result_low & 0x7); // on recup les 3 LSB	
-        printk("status register= 0x%x\n", status_register);
+  printk("status register= 0x%x\n", status_register);
 	printk("status_register_int = %d\n", status_register_int);*/
 	return result;
 }//ReadAD
@@ -121,6 +152,10 @@ double readAD_mVolt(void) {
 	return ((readAD()-2048)*1000)/205;
 
 }
+
+/**
+ * Uninstall driver module
+ */
 void exit_3718(void) {
   printk("uninstall 3718 driver\n");
 }

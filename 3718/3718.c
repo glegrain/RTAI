@@ -94,10 +94,21 @@ void setChannel(int in_channel) {
   // Disable channel scanning by setting the start and stop channel
   // to the same value
   // 4 MSB = scan stop; 4 LSB = start scan
-	char value = (in_channel<<4) + in_channel;
-	outb(value , MUX_CTRL);
+  char value = (in_channel<<4) + in_channel;
+  outb(value , MUX_CTRL);
   // Write anything to BASE to trigger A/D conversion
-	outb(0x1,BASE);
+  // removed because a/D conversion is trigger by the pacer
+  //outb(0x1,BASE);
+
+  // wait for channel change
+  //u8 result_low_channel= inb(AD_LOW_BYTE_AND_CH) & 0x7;
+  //while ((int)result_low_channel != in_channel) {
+    //printk("waiting for channel change\n");
+    //result_low_channel = inb(AD_STATUS_REGISTER) & 0x7;
+  //} // Not working, prink or delay hack works ?????
+  // printk("Channel changed\n");
+  int i = 0;
+  for (i = 0; i < 100000; i++); // delay hack to wait for channel change
 
 }//SetChanel
 
@@ -117,7 +128,6 @@ void ADRangeSelect(int channel, int range) {
 }//ADRangeSelect
 
 u16 readAD(void) {
-
 	// STATUS REGISTER
 	// D7: End Of Conversion:
         //   1 Busy,
@@ -146,7 +156,7 @@ u16 readAD(void) {
 	//printk("LOW_D7D4 = 0x%x\n", result_low>>4);
 	//printk("HIGH = 0x%x\n", result_high);
 	//printk("regToRead = 0x%x\n", result);
-	printk("valeur= %d\n", result); 
+	//printk("valeur= %d\n", result);
 	//printk("channelAD= %d\n", result_low & 0x7); // on recup les 3 LSB
         //printk("status register= 0x%x\n", status_register);
 	//printk("status_register_int = 0x%x\n", status_register_int);

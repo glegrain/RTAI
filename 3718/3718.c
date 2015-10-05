@@ -111,7 +111,7 @@ void ADRangeSelect(int channel, int range) {
 	// on passe au channel suivant lorsqu'on écrit dans AD_RANGE_CTRL
 	outb(range, AD_RANGE_CTRL);
 	//on reset channel
-  // reset channel //TODO: test on order of setChannel
+        // reset channel //TODO: test on order of setChannel
 	//setChannel(channel);
 
 }//ADRangeSelect
@@ -125,31 +125,37 @@ u16 readAD(void) {
         //     conversion is available in the A/D register
 	// D6: N/A
 	// D5: MUX: 0 8 Diff channels; 1 16 Single Ended Channels
-	// D4: INT Data valid //TODO
+	// D4: INT Data valid
         // D3-D0: CN3-CN0 When EOC = 0,
         //
         // these status bits contain the channel number of the next
         // channel to be converted.
 	u8 status_register = inb(AD_STATUS_REGISTER);
-	int status_register_int = 0x01 & (status_register >> 4);	
+	int status_register_int = 0x01 & (status_register >> 4);
 	u8 result_low = inb(AD_LOW_BYTE_AND_CH);
 	u8 result_high = inb(AD_HIGH_BYTE);
-			
+
+        // return -1 if no A/D conversion hqs been completed since the
+        // last time the INT bit was cleared.
+        if (status_register_int != 1) {
+          return -1;
+        }
+
 	u16 result =  0x0FFF & ((result_high<<4) + (result_low>>4));
-	/*printk("LOW = 0x%x\n", result_low);
-	printk("LOW_D7D4 = 0x%x\n", result_low>>4);
-	printk("HIGH = 0x%x\n", result_high);
-	printk("regToRead = 0x%x\n", result);
+	//printk("LOW = 0x%x\n", result_low);
+	//printk("LOW_D7D4 = 0x%x\n", result_low>>4);
+	//printk("HIGH = 0x%x\n", result_high);
+	//printk("regToRead = 0x%x\n", result);
 	printk("valeur= %d\n", result); 
-	printk("channelAD= %d\n", result_low & 0x7); // on recup les 3 LSB	
-  printk("status register= 0x%x\n", status_register);
-	printk("status_register_int = %d\n", status_register_int);*/
+	//printk("channelAD= %d\n", result_low & 0x7); // on recup les 3 LSB
+        //printk("status register= 0x%x\n", status_register);
+	//printk("status_register_int = 0x%x\n", status_register_int);
 	return result;
 }//ReadAD
 
 double readAD_mVolt(void) {
 
-	return ((readAD()-2048)*1000)/205;
+       return ((readAD()-2048)*1000)/205;
 
 }
 

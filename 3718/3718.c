@@ -120,18 +120,18 @@ u16 readAD(void) {
 
 	// STATUS REGISTER
 	// D7: End Of Conversion:
-  //   1 Busy,
-  //   0 Ready for next conversion data from the previous
-  //     conversion is available in the A/D register
+        //   1 Busy,
+        //   0 Ready for next conversion data from the previous
+        //     conversion is available in the A/D register
 	// D6: N/A
 	// D5: MUX: 0 8 Diff channels; 1 16 Single Ended Channels
 	// D4: INT Data valid //TODO
-  // D3-D0: CN3-CN0 When EOC = 0,
-  //
-  // these status bits contain the channel number of the next
-  // channel to be converted.
+        // D3-D0: CN3-CN0 When EOC = 0,
+        //
+        // these status bits contain the channel number of the next
+        // channel to be converted.
 	u8 status_register = inb(AD_STATUS_REGISTER);
-	int status_register_int = 0x00 | (status_register >> 4); // TODO: truncate	
+	int status_register_int = 0x01 & (status_register >> 4);	
 	u8 result_low = inb(AD_LOW_BYTE_AND_CH);
 	u8 result_high = inb(AD_HIGH_BYTE);
 			

@@ -17,6 +17,7 @@ default:
 clean:
 	-rm -f *.o squelette*.ko .*.cmd .*.flags *.mod.c *~
 	-rm -r .tmp*
+	-rm *.ko
 send:
 	scp *.ko runarcom arcom@$(KIT):/home/arcom
 	ssh arcom@$(KIT) 'chmod +x runarcom'

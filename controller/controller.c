@@ -1,4 +1,4 @@
-// 0.0.1 2015-08-07
+// 0.0.2 2015-08-07
 
 
 #include<linux/init.h>
@@ -10,6 +10,7 @@ MODULE_LICENSE("GPL");
 #include <rtai.h>
 #include <rtai_sched.h>
 #include <rtai_fifos.h>
+#include <rtai_sem.h>
 #include "3712.h"
 #include "3718.h"
 
@@ -17,11 +18,12 @@ MODULE_LICENSE("GPL");
 // Scheduling parameters
 #define STACK_SIZE  2000
 //#define PERIOD      100000000   //  100 ms // MATLAB peeriod = 0.010
-#define PERIOD      1000000000   //  1s // for debug
+#define PERIOD      1000000000  //  1s // for debug
 #define TICK_PERIOD 1000000     //  1 ms
 #define NB_LOOP     10          // number of times the task are executed
 
 static RT_TASK sens_task, act_task, pid_task;
+SEM sensDone;
 RTIME now; // tasks start time
 
 int raw2mRad(int raw_value) {
@@ -38,13 +40,16 @@ void senscode(int arg) {
     /* sensor acquisition code */
     ADRangeSelect(0,8);
     int currentAngle = raw2mRad(readAD());
-    printk("angle = %d mRad\n", currentAngle); 
+    printk("angle = %d mRad\n", currentAngle);
    
     ADRangeSelect(1,8);
     int currentPosition = readAD();
     printk("position = %d\n", currentPosition);
 
     printk("\n");
+
+    // signal end of acquisition, ready for control
+    rt_sem_signal(&sensDone);
 
     /* end of sensor acquisition code */
     t_old = t;
@@ -57,13 +62,13 @@ void actcode(int arg) {
   RTIME t, t_old;
 
   while (loop--) {
+    rt_sem_wait(&sensDone); // wait for sensor acquisition
     t = rt_get_time();
     printk("[act_task] time: %llu ms\n", count2nano(t - now));
     /* controller code */
 
     /* end of controller code */
     t_old = t;
-    rt_task_wait_period();
   }
 }
 
@@ -92,6 +97,10 @@ static int test_init(void) {
                             0,           // signal
                             0);          // cpuid
 
+  // init semaphores
+  rt_typed_sem_init(&sensDone,  // semaphore pointer
+		    0,          // initial value
+                    BIN_SEM);   // semaphore type
 
   if (!ierr) {
 
@@ -101,7 +110,7 @@ static int test_init(void) {
 
     // Start tasks
     rt_task_make_periodic(&sens_task, now,  nano2count(PERIOD));
-    //rt_task_resume(&act_task);
+    rt_task_resume(&act_task);
 
   }
   //return ierr;
@@ -112,9 +121,13 @@ void test_exit(void) {
   
   stop_rt_timer();
 
+  // delete tasks
   rt_task_delete(&sens_task);
   rt_task_delete(&act_task);
   //rt_task_delete(&pid_task);
+
+  // delete semaphores
+  rt_sem_delete(&sensDone);
 }
 
 module_init(test_init);

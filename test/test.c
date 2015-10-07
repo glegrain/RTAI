@@ -11,25 +11,37 @@
 #include "3712.h"
 #include "3718.h"
 
+int raw2mRad(int raw_value) {
+  return 3.845e-1 * raw_value - 782;
+}
+
 static int test_init(void) {
 	
 	// write -9 V to channel 1 using DAC
-	setDA(1,-9);
+	//setDA(1,-3);
 	// write -7 V to channel 2 using DAC
-	setDA(2,-7);
+	//setDA(2,-7);
 
-        // Hack delay to wait for DAC response
-	int i = 0;
-	for (i = 0; i < 10000000; i++);
 
-        //Confgure ADC to use channel 1 +/-10V
+	//while(1){
+
+	// Hack delay to wait for DAC response
+	//int i = 0;
+	//for (i = 0; i < 5000000; i++);
+
+	printk("\n");
+        //Configure ADC to use channel 1 +/-10V
+	ADRangeSelect(0,8);
+	printk("res0 en= %d mV\n", readAD_mVolt());
+	printk("res0 = %d\n", readAD());
+        printk("angle = %d (mRad)\n", raw2mRad(readAD()));
+	
+	printk("\n");
+	////Confgure ADC to use channel 2 +/-10V
 	ADRangeSelect(1,8);
 	printk("res1 = %d mV\n", readAD_mVolt());
-
-	////Confgure ADC to use channel 2 +/-10V
-	ADRangeSelect(2,8);
-	printk("res2 = %d\n mV", readAD_mVolt());
-
+	printk("res1 = %d\n", readAD());
+	//	}
 	return(0);
 }
 

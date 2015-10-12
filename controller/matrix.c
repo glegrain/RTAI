@@ -1,14 +1,18 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/vmalloc.h>
 
 // https://theory.stanford.edu/~arbrad/pfe/06/matrix.c
 
 typedef struct {
   int rows;
   int cols;
-  double * data;
+  u16 * data;
 } matrix;
+
+#ifndef NULL
+#define NULL ( (void *) 0)
+#endif
 
 /* Creates a ``rows by cols'' matrix with all values 0.  
  * Returns NULL if rows <= 0 or cols <= 0 and otherwise a
@@ -16,16 +20,21 @@ typedef struct {
  */
 matrix * newMatrix(int rows, int cols) {
   if (rows <= 0 || cols <= 0) return NULL;
-
+  
   // allocate a matrix structure
-  matrix * m = (matrix *) malloc(sizeof(matrix));
+  matrix * m = (matrix *) vmalloc(sizeof(matrix));
+
+  // hacky alloc
+  //matrix *m = (matrix) {(int) 0, (int) 0, (u16*) [0, 0, 0, 0]};
+  //matrix *m = (matrix) [0, 0, 0, 0, 0, 0];
 
   // set dimensions
   m->rows = rows;
   m->cols = cols;
 
-  // allocate a double array of length rows * cols
-  m->data = (double *) malloc(rows*cols*sizeof(double));
+  // allocate a u16 array of length rows * cols
+  m->data = (u16 *) vmalloc(rows*cols*sizeof(u16));
+  
   // set all data to 0
   int i;
   for (i = 0; i < rows*cols; i++)
@@ -40,10 +49,10 @@ matrix * newMatrix(int rows, int cols) {
 int deleteMatrix(matrix * mtx) {
   if (!mtx) return -1;
   // free mtx's data
-  assert (mtx->data);
-  free(mtx->data);
+  //assert (mtx->data); // removed for kernel
+  vfree(mtx->data);
   // free mtx itself
-  free(mtx);
+  vfree(mtx);
   return 0;
 }
 
@@ -60,7 +69,7 @@ int deleteMatrix(matrix * mtx) {
 
 //   // copy mtx's data to cp's data
 //   memcpy(cp->data, mtx->data, 
-//          mtx->rows * mtx->cols * sizeof(double));
+//          mtx->rows * mtx->cols * sizeof(u16));
 
 //   return cp;
 // }
@@ -69,10 +78,10 @@ int deleteMatrix(matrix * mtx) {
  * successful, -1 if mtx is NULL, and -2 if row or col are
  * outside of the dimensions of mtx.
  */
-int setElement(matrix * mtx, int row, int col, double val) 
+int setElement(matrix * mtx, int row, int col, u16 val) 
 {
   if (!mtx) return -1;
-  assert (mtx->data);
+  // assert (mtx->data); // removed for kernel
   if (row <= 0 || row > mtx->rows ||
       col <= 0 || col > mtx->cols)
     return -2;
@@ -87,9 +96,9 @@ int setElement(matrix * mtx, int row, int col, double val)
  * the dimensions of mtx.
  */
 int getElement(matrix * mtx, int row, int col, 
-               double * val) {
+               u16 * val) {
   if (!mtx || !val) return -1;
-  assert (mtx->data);
+  // assert (mtx->data); // removed for kernel
   if (row <= 0 || row > mtx->rows ||
       col <= 0 || col > mtx->cols)
     return -2;
@@ -129,10 +138,11 @@ int printMatrix(matrix * mtx) {
       //  - either a - if negative or a space if positive
       //  - at least 3 spaces before the .
       //  - precision to the hundredths place
-      printf("% 6.2f ", ELEM(mtx, row, col));
+      //printk("% 6.2f ", ELEM(mtx, row, col)); // double changed to u16
+      printk("%d ", ELEM(mtx, row, col));
     }
     // separate rows by newlines
-    printf("\n");
+    printk("\n");
   }
   return 0;
 }
@@ -189,7 +199,7 @@ int product(matrix * mtx1, matrix * mtx2, matrix * prod) {
   int row, col, k;
   for (col = 1; col <= mtx2->cols; col++)
     for (row = 1; row <= mtx1->rows; row++) {
-      double val = 0.0;
+      u16 val = 0.0;
       for (k = 1; k <= mtx1->cols; k++)
         val += ELEM(mtx1, row, k) * ELEM(mtx2, k, col);
       ELEM(prod, row, col) = val;
@@ -203,7 +213,7 @@ int product(matrix * mtx1, matrix * mtx2, matrix * prod) {
  * vector, and -3 if the vectors are of incompatible 
  * dimensions.
  */
-int dotProduct(matrix * v1, matrix * v2, double * prod) {
+int dotProduct(matrix * v1, matrix * v2, u16 * prod) {
   if (!v1 || !v2 || !prod) return -1;
   if (v1->cols != 1 || v2->cols != 1) return -2;
   if (v1->rows != v2->rows) return -3;
@@ -268,3 +278,26 @@ int diagonal(matrix * v, matrix * mtx) {
         ELEM(mtx, row, col) = 0.0;
   return 0;
 }
+
+/**
+ * Driver initilisation
+ */
+static int init_matrix(void) { 
+  printk("install 3718 driver\n");
+  return 0;
+}
+
+/**
+ * Uninstall driver module
+ */
+void exit_matrix(void) {
+  printk("uninstall matrix module\n");
+}
+
+EXPORT_SYMBOL(newMatrix);
+EXPORT_SYMBOL(setElement);
+EXPORT_SYMBOL(printMatrix);
+
+
+module_init(init_matrix);
+module_exit(exit_matrix);

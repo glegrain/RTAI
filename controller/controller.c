@@ -11,6 +11,7 @@ MODULE_LICENSE("GPL");
 #include <rtai_sched.h>
 #include <rtai_fifos.h>
 #include <rtai_sem.h>
+#include "matrix.h"
 #include "3712.h"
 #include "3718.h"
 
@@ -23,6 +24,7 @@ MODULE_LICENSE("GPL");
 #define NB_LOOP     10          // number of times the task are executed
 
 static RT_TASK sens_task, act_task, pid_task;
+int ctrlcode(u16 currentAngle, u16 currentPosition);
 SEM sensDone;
 RTIME now; // tasks start time
 
@@ -66,7 +68,7 @@ void actcode(int arg) {
     t = rt_get_time();
     printk("[act_task] time: %llu ms\n", count2nano(t - now));
     /* controller code */
-
+    ctrlcode(0,0);
     /* end of controller code */
     t_old = t;
   }
@@ -116,6 +118,18 @@ static int test_init(void) {
   //return ierr;
   return 0; // pour ne pas faire planter le kernel	
 }
+
+
+int ctrlcode(u16 currentAngle, u16 currentPosition){
+
+  matrix *A = newMatrix(2,2);
+  setElement(A,1,1,1);
+  setElement(A,1,2,1);
+  setElement(A,2,1,1);
+  setElement(A,2,2,1);
+  printMatrix(A);
+  return 0;
+}//ctrlcode
 
 void test_exit(void) {
   

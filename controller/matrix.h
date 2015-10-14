@@ -13,7 +13,7 @@ int deleteMatrix(matrix * mtx);
 #define ELEM(mtx, row, col) \
   mtx->data[(col-1) * mtx->rows + (row-1)]
 
-int setElement(matrix * mtx, int row, int col, double val);
+int setElement(matrix * mtx, int row, int col, u16 val);
 int printMatrix(matrix * mtx);
 int sum(matrix * mtx1, matrix * mtx2, matrix * sum);
 int product(matrix * mtx1, matrix * mtx2, matrix * prod);

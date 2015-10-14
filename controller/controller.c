@@ -23,6 +23,11 @@ MODULE_LICENSE("GPL");
 #define TICK_PERIOD 1000000     //  1 ms
 #define NB_LOOP     10          // number of times the task are executed
 
+
+// Controller state matrices
+matrix *Adc, *Bdc, *Cdc;
+matrix *x, *u;
+
 static RT_TASK sens_task, act_task, pid_task;
 int ctrlcode(u16 currentAngle, u16 currentPosition);
 SEM sensDone;
@@ -73,6 +78,30 @@ void actcode(int arg) {
     t_old = t;
   }
 }
+static void init_matrices(void) {
+  // Init controller state matrices
+  Adc = newMatrix(4,4);
+  setElement(Adc,1,1, 504); setElement(Adc, 1,2, 138); setElement(Adc, 1,3, 0); setElement(Adc, 1,4, 1);
+  setElement(Adc,1,1, 147); setElement(Adc, 1,2, 486); setElement(Adc, 1,3, 0); setElement(Adc, 1,4, 1);
+  setElement(Adc,1,1, 504); setElement(Adc, 1,2, 138); setElement(Adc, 1,3, 0); setElement(Adc, 1,4, 1);
+  setElement(Adc,1,1, 504); setElement(Adc, 1,2, 138); setElement(Adc, 1,3, 0); setElement(Adc, 1,4, 1);
+
+  Bdc = newMatrix(4,2);
+  setElement(Bdc,1,1, 0); setElement(Bdc, 1,2, 0);
+  setElement(Bdc,2,1, 0); setElement(Bdc, 2,2, 0);
+  setElement(Bdc,3,1, 0); setElement(Bdc, 3,2, 0);
+  setElement(Bdc,4,1, 0); setElement(Bdc, 4,2, 0);
+
+  Cdc = newMatrix(1,4);
+  setElement(Cdc,1,1, 0); setElement(Cdc, 1,2, 0); setElement(Cdc, 1,3, 0); setElement(Cdc, 1,4, 0);
+
+  Ddc = newMatrix(1,2);
+  setElement(Ddc,1,1, 0); setElement(Ddc, 1,2, 0);
+
+  // Init ...
+  x = newMatrix(4,4);
+  u = newMatrix(1,1);
+}
 
 static int test_init(void) {
   int ierr;
@@ -81,6 +110,9 @@ static int test_init(void) {
 
   printk("PGM STARTING\n");
 
+  init_matrices();
+
+  // Create real-time tasks
   ierr = rt_task_init_cpuid(&sens_task,  // task
                             senscode,    // rt_thread
                             0,           // data
@@ -128,6 +160,29 @@ int ctrlcode(u16 currentAngle, u16 currentPosition){
   setElement(A,2,1,1);
   setElement(A,2,2,1);
   printMatrix(A);
+
+  // temp matrices for operations
+  matrix *tmp4x4_1 = newMatrix(4,4);
+  matrix *tmp4x4_2 = newMatrix(4,4);
+
+  // update y with current sensor readings
+  setElement(y, 1, 1, currentAngle);
+  setElement(y, 1, 2, currentPosition);
+
+  // update state
+  // x = Adc * x + Bdc * y
+  product(Adc, x, tmp4x4_1);
+  product(Adc, x, tmp4x4_1);
+  sum(tmp4x4_1, tmp4x4_2, x);
+
+  // update comand
+  // u = Cdc * x // TODO: change sign
+  product(Cdc, x, u);
+
+  // delete allocated temp matrices
+  delete(tmp4x4_1);
+  delete(tmp4x4_2);
+
   return 0;
 }//ctrlcode
 
@@ -142,6 +197,12 @@ void test_exit(void) {
 
   // delete semaphores
   rt_sem_delete(&sensDone);
+
+  // delete allocated matrices
+  delete(Adc);
+  delete(Bdc);
+  delete(Cdc);
+  delete(Bdc);
 }
 
 module_init(test_init);

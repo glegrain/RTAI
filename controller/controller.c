@@ -25,12 +25,13 @@ MODULE_LICENSE("GPL");
 //#define PERIOD      100000000   //  100 ms // MATLAB peeriod = 0.010
 #define PERIOD      1000000000  //  1s // for debug
 #define TICK_PERIOD 1000000     //  1 ms
-#define NB_LOOP     10          // number of times the task are executed
-
 
 // Controller state matrices
 matrix *Adc, *Bdc, *Cdc, *Ddc;
 matrix *x, *y, *u;
+matrix *tmp4x4_1, *tmp4x4_2;
+
+u16 currentAngle, currentPosition;
 
 static RT_TASK sens_task, act_task, pid_task;
 int ctrlcode(u16 currentAngle, u16 currentPosition);
@@ -42,19 +43,18 @@ int raw2mRad(int raw_value) {
 }
 
 void senscode(int arg) {
-  static int loop = NB_LOOP;
   RTIME t, t_old;
 
-  while (loop--) {
+  while (1) {
     t = rt_get_time();
     printk("[sens_task] time: %llu ns\n", count2nano(t - now));
     /* sensor acquisition code */
     ADRangeSelect(0,8);
-    int currentAngle = raw2mRad(readAD());
+    currentAngle = raw2mRad(readAD());
     printk("angle = %d mRad\n", currentAngle);
 
     ADRangeSelect(1,8);
-    int currentPosition = readAD();
+    currentPosition = readAD_mVolt();
     printk("position = %d\n", currentPosition);
 
     printk("\n");
@@ -69,15 +69,14 @@ void senscode(int arg) {
 }
 
 void actcode(int arg) {
-  static int loop = NB_LOOP;
   RTIME t, t_old;
 
-  while (loop--) {
+  while (1) {
     rt_sem_wait(&sensDone); // wait for sensor acquisition
     t = rt_get_time();
     printk("[act_task] time: %llu ms\n", count2nano(t - now));
     /* controller code */
-    ctrlcode(0,0);
+    ctrlcode(currentAngle, currentPosition);
     /* end of controller code */
     t_old = t;
   }
@@ -85,27 +84,31 @@ void actcode(int arg) {
 static void init_matrices(void) {
   // Init controller state matrices
   Adc = newMatrix(4,4);
-  setElement(Adc,1,1, 504); setElement(Adc, 1,2, 138); setElement(Adc, 1,3, 0); setElement(Adc, 1,4, 1);
-  setElement(Adc,1,1, 147); setElement(Adc, 1,2, 486); setElement(Adc, 1,3, 0); setElement(Adc, 1,4, 1);
-  setElement(Adc,1,1, 504); setElement(Adc, 1,2, 138); setElement(Adc, 1,3, 0); setElement(Adc, 1,4, 1);
-  setElement(Adc,1,1, 504); setElement(Adc, 1,2, 138); setElement(Adc, 1,3, 0); setElement(Adc, 1,4, 1);
+  setElement(Adc,1,1,   619); setElement(Adc, 1,2,    96); setElement(Adc, 1,3,   -1); setElement(Adc, 1,4,   8);
+  setElement(Adc,1,1,    97); setElement(Adc, 1,2,   703); setElement(Adc, 1,3,   10); setElement(Adc, 1,4,   1);
+  setElement(Adc,1,1,  1812); setElement(Adc, 1,2, -1800); setElement(Adc, 1,3, 1130); setElement(Adc, 1,4, 235);
+  setElement(Adc,1,1, -3884); setElement(Adc, 1,2,   872); setElement(Adc, 1,3, -155); setElement(Adc, 1,4, 722);
 
   Bdc = newMatrix(4,2);
-  setElement(Bdc,1,1, 0); setElement(Bdc, 1,2, 0);
-  setElement(Bdc,2,1, 0); setElement(Bdc, 2,2, 0);
-  setElement(Bdc,3,1, 0); setElement(Bdc, 3,2, 0);
-  setElement(Bdc,4,1, 0); setElement(Bdc, 4,2, 0);
+  setElement(Bdc,1,1,   376); setElement(Bdc, 1,2,  -98);
+  setElement(Bdc,2,1,   -94); setElement(Bdc, 2,2,  296);
+  setElement(Bdc,3,1, -1014); setElement(Bdc, 3,2, 1895);
+  setElement(Bdc,4,1,  3053); setElement(Bdc, 4,2, -986);
 
   Cdc = newMatrix(1,4);
-  setElement(Cdc,1,1, 0); setElement(Cdc, 1,2, 0); setElement(Cdc, 1,3, 0); setElement(Cdc, 1,4, 0);
+  setElement(Cdc,1,1, -80310); setElement(Cdc, 1,2, -9624); setElement(Cdc, 1,3, -14122); setElement(Cdc, 1,4, -23626);
 
   Ddc = newMatrix(1,2);
   setElement(Ddc,1,1, 0); setElement(Ddc, 1,2, 0);
 
   // Init ...
-  x = newMatrix(4,4);
-  y = newMatrix(1,2);
+  x = newMatrix(4,1);
+  y = newMatrix(2,1);
   u = newMatrix(1,1);
+
+  // temp matrices for operations
+  tmp4x4_1 = newMatrix(4,1);
+  tmp4x4_2 = newMatrix(4,1);
 
 }
 
@@ -160,34 +163,37 @@ static int test_init(void) {
 
 int ctrlcode(u16 currentAngle, u16 currentPosition){
 
-  // temp matrices for operations
-  matrix *tmp4x4_1 = newMatrix(4,4);
-  matrix *tmp4x4_2 = newMatrix(4,4);
-
   // update y with current sensor readings
   setElement(y, 1, 1, currentAngle);
-  setElement(y, 1, 2, currentPosition);
+  setElement(y, 2, 1, currentPosition);
 
   // update state
-  // x = Adc * x + Bdc * y
+  // eq: x = Adc * x + Bdc * y
   product(Adc, x, tmp4x4_1);
-  product(Adc, x, tmp4x4_1);
+  product(Bdc, y, tmp4x4_2);
   sum(tmp4x4_1, tmp4x4_2, x);
 
   // update comand
-  // u = Cdc * x // TODO: change sign
+  // eq: u = Cdc * x // TODO: change sign
   product(Cdc, x, u);
+  setElement(u,1,1, 6);
 
-  printk("x: \n");
-  printMatrix(x);
   printk("y: \n");
   printMatrix(y);
+  printk("x: \n");
+  printMatrix(x);
   printk("u: \n");
   printMatrix(u);
 
-  // delete allocated temp matrices
-  delete(tmp4x4_1);
-  delete(tmp4x4_2);
+  // convert command matrix u to scalar
+  u16 command;
+  //getElement(u, 1, 1, &command); // TODO: Debug me
+  //command = u->data[0];
+  printk("data u = %x\n", u->data[0]);
+  printk("COMMAND u = %x\n", command);
+
+  // send command
+  //setDA_mVolt(-command);
 
   return 0;
 }//ctrlcode
@@ -205,13 +211,15 @@ void test_exit(void) {
   rt_sem_delete(&sensDone);
 
   // delete allocated matrices
-  delete(Adc);
-  delete(Bdc);
-  delete(Cdc);
-  delete(Ddc);
-  delete(x);
-  delete(y);
-  delete(u);
+  deleteMatrix(Adc);
+  deleteMatrix(Bdc);
+  deleteMatrix(Cdc);
+  deleteMatrix(Ddc);
+  deleteMatrix(x);
+  deleteMatrix(y);
+  deleteMatrix(u);
+  deleteMatrix(tmp4x4_1);
+  deleteMatrix(tmp4x4_2);
 }
 
 module_init(test_init);

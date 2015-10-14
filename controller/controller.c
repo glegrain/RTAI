@@ -43,7 +43,7 @@ void senscode(int arg) {
     ADRangeSelect(0,8);
     int currentAngle = raw2mRad(readAD());
     printk("angle = %d mRad\n", currentAngle);
-   
+
     ADRangeSelect(1,8);
     int currentPosition = readAD();
     printk("position = %d\n", currentPosition);
@@ -101,7 +101,7 @@ static int test_init(void) {
 
   // init semaphores
   rt_typed_sem_init(&sensDone,  // semaphore pointer
-		    0,          // initial value
+		                0,          // initial value
                     BIN_SEM);   // semaphore type
 
   if (!ierr) {
@@ -116,7 +116,7 @@ static int test_init(void) {
 
   }
   //return ierr;
-  return 0; // pour ne pas faire planter le kernel	
+  return 0; // pour ne pas faire planter le kernel
 }
 
 
@@ -132,7 +132,7 @@ int ctrlcode(u16 currentAngle, u16 currentPosition){
 }//ctrlcode
 
 void test_exit(void) {
-  
+
   stop_rt_timer();
 
   // delete tasks

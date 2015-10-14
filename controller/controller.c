@@ -1,5 +1,9 @@
-// 0.0.2 2015-08-07
-
+// 0.0.3 2015-10-14
+// controller.c
+// Guillaume Legrain <guillaume.legrain@edu.esiee.fr>
+// Florian Martin <florian.martin@edu.esiee.fr>
+//
+// main module to control pendulum
 
 #include<linux/init.h>
 #include<linux/module.h>

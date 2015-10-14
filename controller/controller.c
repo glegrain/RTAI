@@ -29,8 +29,8 @@ MODULE_LICENSE("GPL");
 
 
 // Controller state matrices
-matrix *Adc, *Bdc, *Cdc;
-matrix *x, *u;
+matrix *Adc, *Bdc, *Cdc, *Ddc;
+matrix *x, *y, *u;
 
 static RT_TASK sens_task, act_task, pid_task;
 int ctrlcode(u16 currentAngle, u16 currentPosition);
@@ -104,7 +104,9 @@ static void init_matrices(void) {
 
   // Init ...
   x = newMatrix(4,4);
+  y = newMatrix(1,2);
   u = newMatrix(1,1);
+
 }
 
 static int test_init(void) {
@@ -158,13 +160,6 @@ static int test_init(void) {
 
 int ctrlcode(u16 currentAngle, u16 currentPosition){
 
-  matrix *A = newMatrix(2,2);
-  setElement(A,1,1,1);
-  setElement(A,1,2,1);
-  setElement(A,2,1,1);
-  setElement(A,2,2,1);
-  printMatrix(A);
-
   // temp matrices for operations
   matrix *tmp4x4_1 = newMatrix(4,4);
   matrix *tmp4x4_2 = newMatrix(4,4);
@@ -182,6 +177,13 @@ int ctrlcode(u16 currentAngle, u16 currentPosition){
   // update comand
   // u = Cdc * x // TODO: change sign
   product(Cdc, x, u);
+
+  printk("x: \n");
+  printMatrix(x);
+  printk("y: \n");
+  printMatrix(y);
+  printk("u: \n");
+  printMatrix(u);
 
   // delete allocated temp matrices
   delete(tmp4x4_1);
@@ -206,7 +208,10 @@ void test_exit(void) {
   delete(Adc);
   delete(Bdc);
   delete(Cdc);
-  delete(Bdc);
+  delete(Ddc);
+  delete(x);
+  delete(y);
+  delete(u);
 }
 
 module_init(test_init);

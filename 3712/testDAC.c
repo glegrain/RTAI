@@ -13,8 +13,8 @@
 static int test_init(void) {
 	
 	int ierr;
-	setDA(1,7);
-	setDA(2,-15);
+	setDA_mVolt(1,7);
+	setDA_mVolt(2,-15);
 	return(0);
 }
 

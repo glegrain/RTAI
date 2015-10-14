@@ -18,9 +18,9 @@ int raw2mRad(int raw_value) {
 static int test_init(void) {
 	
 	// write -9 V to channel 1 using DAC
-	//setDA(1,-3);
+	setDA_mVolt(1,-3000);
 	// write -7 V to channel 2 using DAC
-	//setDA(2,-7);
+	setDA_mVolt(2,-7000);
 
 
 	//while(1){

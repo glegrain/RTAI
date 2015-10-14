@@ -27,7 +27,7 @@
 
 #define VREF 10
 
-void setDA(int, int);
+void setDA_mVolt(int, int);
 void setDA_raw(int, int);
 
 /**
@@ -38,8 +38,8 @@ static int init_3712(void) {
 
 	printk("install 3712 driver\n");
 	// reset output value for both channel to 0V
-	setDA(1,0);
-	setDA(2,0);
+	setDA_mVolt(1,0);
+	setDA_mVolt(2,0);
 
 	//enable output
 	outb(0xFF, OUTPUT_CTRL);
@@ -77,22 +77,22 @@ void setDA_raw(int channel, int value){
 }//setDA
 
 /**
- * Set output voltage in volts
+ * Set output voltage in mVolts
  * @arg int channel output channel (1-2)
- * @arg int value_volt desired voltage (+/- 10V)
+ * @arg int value_mVolt desired voltage (+/- 10000mV)
  */
-void setDA(int channel, int value_volts) {
+void setDA_mVolt(int channel, int value_mVolt) {
   // Limit voltage to +/- 10V
-	if (value_volts >= 10) {
+	if (value_mVolt >= 10000) {
 		setDA_raw(channel, 0xFFF);
 		return;
 	}
-	if (value_volts <= -10) {
+	if (value_mVolt <= -10000) {
 		setDA_raw(channel, 0x000);
 		return;
 	}
 	
-	int value = (2048*value_volts / VREF) + 2048;
+	int value = (2.048*value_mVolt / VREF) + 2048;
 	setDA_raw(channel, value);	
 }
 
@@ -110,7 +110,7 @@ void exit_3712(void) {
 
 
 // Export function for use in other modules
-EXPORT_SYMBOL(setDA);
+EXPORT_SYMBOL(setDA_mVolt);
 EXPORT_SYMBOL(setDA_raw);
 EXPORT_SYMBOL(init_3712);
 EXPORT_SYMBOL(exit_3712);

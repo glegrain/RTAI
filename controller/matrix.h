@@ -14,6 +14,7 @@ int deleteMatrix(matrix * mtx);
   mtx->data[(col-1) * mtx->rows + (row-1)]
 
 int setElement(matrix * mtx, int row, int col, u16 val);
+int getElement(matrix * mtx, int row, int col, u16 val);
 int printMatrix(matrix * mtx);
 int sum(matrix * mtx1, matrix * mtx2, matrix * sum);
 int product(matrix * mtx1, matrix * mtx2, matrix * prod);

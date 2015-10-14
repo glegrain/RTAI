@@ -38,7 +38,7 @@ matrix * newMatrix(int rows, int cols) {
   // set all data to 0
   int i;
   for (i = 0; i < rows*cols; i++)
-    m->data[i] = 0.0;
+    m->data[i] = (u16) 0;
 
   return m;
 }
@@ -295,8 +295,12 @@ void exit_matrix(void) {
 }
 
 EXPORT_SYMBOL(newMatrix);
+EXPORT_SYMBOL(deleteMatrix);
 EXPORT_SYMBOL(setElement);
 EXPORT_SYMBOL(printMatrix);
+EXPORT_SYMBOL(sum);
+EXPORT_SYMBOL(product);
+EXPORT_SYMBOL(getElement);
 
 
 module_init(init_matrix);

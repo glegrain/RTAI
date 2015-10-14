@@ -19,6 +19,6 @@ clean:
 	-rm -r .tmp*
 	-rm *.ko
 send:
-	scp *.ko runarcom arcom@$(KIT):/home/arcom
-	ssh arcom@$(KIT) 'chmod +x runarcom'
-	ssh arcom@$(KIT)
+	cp *.ko runarcom arcom@$(KIT):/home/arcom
+	sh arcom@$(KIT) 'chmod +x runarcom'
+	sh arcom@$(KIT)

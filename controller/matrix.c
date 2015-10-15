@@ -1,6 +1,7 @@
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/vmalloc.h>
+#include "matrix.h"
 
 // https://theory.stanford.edu/~arbrad/pfe/06/matrix.c
 
@@ -278,30 +279,3 @@ int diagonal(matrix * v, matrix * mtx) {
         ELEM(mtx, row, col) = 0.0;
   return 0;
 }
-
-/**
- * Driver initilisation
- */
-static int init_matrix(void) { 
-  printk("install 3718 driver\n");
-  return 0;
-}
-
-/**
- * Uninstall driver module
- */
-void exit_matrix(void) {
-  printk("uninstall matrix module\n");
-}
-
-EXPORT_SYMBOL(newMatrix);
-EXPORT_SYMBOL(deleteMatrix);
-EXPORT_SYMBOL(setElement);
-EXPORT_SYMBOL(printMatrix);
-EXPORT_SYMBOL(sum);
-EXPORT_SYMBOL(product);
-EXPORT_SYMBOL(getElement);
-
-
-module_init(init_matrix);
-module_exit(exit_matrix);

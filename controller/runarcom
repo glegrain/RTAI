@@ -12,7 +12,6 @@ sudo insmod /usr/realtime/modules/rtai_sched.ko
 sudo insmod /usr/realtime/modules/rtai_sem.ko
 sudo insmod 3712.ko
 sudo insmod 3718.ko
-sudo insmod matrix.ko
 sudo insmod controller.ko
 
 lsmod
@@ -21,7 +20,6 @@ echo "Tapez <return> pour l'arreter."
 read junk
 
 sudo rmmod controller
-sudo rmmod matrix
 sudo rmmod 3718
 sudo rmmod 3712
 sudo rmmod rtai_sem

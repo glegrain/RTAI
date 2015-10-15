@@ -1,7 +1,6 @@
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/vmalloc.h>
-#include "matrix.h"
 
 // https://theory.stanford.edu/~arbrad/pfe/06/matrix.c
 

@@ -1,9 +1,9 @@
 # Controller Makefile
-obj-m := 3718.o
-obj-m := 3712.o
-obj-m := matrix.o
-obj-m := main.o
-obj-m := controller.o
+obj-m += 3718.o
+obj-m += 3712.o
+obj-m += matrix.o
+obj-m += main.o
+obj-m += controller.o
 controller-objs := matrix.o main.o
 
 PATH := /opt/x86_64/gcc/gcc-3.4.4/bin:$(PATH)

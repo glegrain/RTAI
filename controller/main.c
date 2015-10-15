@@ -22,8 +22,8 @@ MODULE_LICENSE("GPL");
 
 // Scheduling parameters
 #define STACK_SIZE  2000
-//#define PERIOD      100000000   //  100 ms // MATLAB peeriod = 0.010
-#define PERIOD      1000000000  //  1s // for debug
+#define PERIOD      100000000   //  100 ms // MATLAB peeriod = 0.010
+//#define PERIOD      1000000000  //  1s // for debug
 #define TICK_PERIOD 1000000     //  1 ms
 
 // Controller state matrices
@@ -124,11 +124,6 @@ static int test_init(void) {
 
     init_matrices();
 
-    // write -9 V to channel 1 using DAC
-    setDA_mVolt(1,3000);
-    // write -7 V to channel 2 using DAC
-    setDA_mVolt(2,-7000);
-
     // Create real-time tasks
     ierr = rt_task_init_cpuid(&sens_task,  // task
                               senscode,    // rt_thread
@@ -182,24 +177,23 @@ int ctrlcode(u16 currentAngle, u16 currentPosition){
     // update comand
     // eq: u = Cdc * x // TODO: change sign
     product(Cdc, x, u);
-    setElement(u,1,1, 6);
 
-    printk("y: \n");
-    printMatrix(y);
-    printk("x: \n");
-    printMatrix(x);
-    printk("u: \n");
-    printMatrix(u);
+    // printk("y: \n");
+    // printMatrix(y);
+    // printk("x: \n");
+    // printMatrix(x);
+    // printk("u: \n");
+    // printMatrix(u);
 
     // convert command matrix u to scalar
     int command;
     getElement(u, 1, 1, &command);
-    printk("COMMAND u = %x\n", command);
+    //printk("Command u = %d\n", command);
 
     // send command
-    //setDA_mVolt(-command); // remove setDA before uncommenting
+    setDA_mVolt(1, command/500000); // remove setDA before uncommenting
     
-
+    printk("\n");
 
     return 0;
 }//ctrlcode

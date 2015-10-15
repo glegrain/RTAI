@@ -7,7 +7,7 @@ obj-m += controller.o
 controller-objs := matrix.o main.o
 
 PATH := /opt/x86_64/gcc/gcc-3.4.4/bin:$(PATH)
-KIT = arcom20.esiee.fr
+KIT = arcom9.esiee.fr
 CURRENT = 2.6.16.14-arcom1
 KDIR = /usr/lib/arcom/lib/modules/${CURRENT}/build
 PWD = $(shell pwd)

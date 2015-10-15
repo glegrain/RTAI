@@ -1,14 +1,9 @@
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/vmalloc.h>
+#include "matrix.h"
 
 // https://theory.stanford.edu/~arbrad/pfe/06/matrix.c
-
-typedef struct {
-  int rows;
-  int cols;
-  int * data;
-} matrix;
 
 #ifndef NULL
 #define NULL ( (void *) 0)
@@ -24,21 +19,17 @@ matrix * newMatrix(int rows, int cols) {
   // allocate a matrix structure
   matrix * m = (matrix *) vmalloc(sizeof(matrix));
 
-  // hacky alloc
-  //matrix *m = (matrix) {(int) 0, (int) 0, (int*) [0, 0, 0, 0]};
-  //matrix *m = (matrix) [0, 0, 0, 0, 0, 0];
-
   // set dimensions
   m->rows = rows;
   m->cols = cols;
 
   // allocate a int array of length rows * cols
-  m->data = (int *) vmalloc(rows*cols*sizeof(int));
+  m->data = (float *) vmalloc(rows*cols*sizeof(float));
   
   // set all data to 0
   int i;
   for (i = 0; i < rows*cols; i++)
-    m->data[i] = (int) 0;
+    m->data[i] = (float) 0;
 
   return m;
 }
@@ -69,7 +60,7 @@ int deleteMatrix(matrix * mtx) {
 
 //   // copy mtx's data to cp's data
 //   memcpy(cp->data, mtx->data, 
-//          mtx->rows * mtx->cols * sizeof(int));
+//          mtx->rows * mtx->cols * sizeof(float));
 
 //   return cp;
 // }
@@ -78,7 +69,7 @@ int deleteMatrix(matrix * mtx) {
  * successful, -1 if mtx is NULL, and -2 if row or col are
  * outside of the dimensions of mtx.
  */
-int setElement(matrix * mtx, int row, int col, int val) 
+int setElement(matrix * mtx, int row, int col, float val) 
 {
   if (!mtx) return -1;
   // assert (mtx->data); // removed for kernel
@@ -95,8 +86,8 @@ int setElement(matrix * mtx, int row, int col, int val)
  * mtx or val is NULL, and -2 if row or col are outside of 
  * the dimensions of mtx.
  */
-int getElement(matrix * mtx, int row, int col, 
-               int * val) {
+int  getElement(matrix * mtx, int row, int col, 
+                 float *val) {
   if (!mtx || !val) return -1;
   // assert (mtx->data); // removed for kernel
   if (row <= 0 || row > mtx->rows ||
@@ -199,10 +190,11 @@ int product(matrix * mtx1, matrix * mtx2, matrix * prod) {
   int row, col, k;
   for (col = 1; col <= mtx2->cols; col++)
     for (row = 1; row <= mtx1->rows; row++) {
-      int val = 0.0;
+      float val = 0.0;
       for (k = 1; k <= mtx1->cols; k++)
         val += ELEM(mtx1, row, k) * ELEM(mtx2, k, col);
       ELEM(prod, row, col) = val;
+      printk("delay\n");
     }
   return 0;
 }

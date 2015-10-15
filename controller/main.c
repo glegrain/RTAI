@@ -34,12 +34,12 @@ matrix *tmp4x4_1, *tmp4x4_2;
 int currentAngle, currentPosition;
 
 static RT_TASK sens_task, act_task, pid_task;
-int ctrlcode(u16 currentAngle, u16 currentPosition);
+int ctrlcode(int currentAngle, int currentPosition);
 SEM sensDone;
 RTIME now; // tasks start time
 
 int raw2mRad(u16 raw_value) {
-    return 3.845e-1 * raw_value - 782;
+    return 3.845e-1 * (int) raw_value - 0.782;
 }
 
 int raw2mVolt(u16 raw_value) {
@@ -88,19 +88,19 @@ void actcode(int arg) {
 static void init_matrices(void) {
     // Init controller state matrices
     Adc = newMatrix(4,4);
-    setElement(Adc,1,1,   619); setElement(Adc, 1,2,    96); setElement(Adc, 1,3,   -1); setElement(Adc, 1,4,   8);
-    setElement(Adc,1,1,    97); setElement(Adc, 1,2,   703); setElement(Adc, 1,3,   10); setElement(Adc, 1,4,   1);
-    setElement(Adc,1,1,  1812); setElement(Adc, 1,2, -1800); setElement(Adc, 1,3, 1130); setElement(Adc, 1,4, 235);
-    setElement(Adc,1,1, -3884); setElement(Adc, 1,2,   872); setElement(Adc, 1,3, -155); setElement(Adc, 1,4, 722);
+    setElement(Adc,1,1,  0.61963); setElement(Adc, 1,2,  0.09677); setElement(Adc, 1,3, -0.00077); setElement(Adc, 1,4, 0.00861);
+    setElement(Adc,1,1,  0.09708); setElement(Adc, 1,2,  0.70384); setElement(Adc, 1,3,  0.01065); setElement(Adc, 1,4, 0.00118);
+    setElement(Adc,1,1,  1.81243); setElement(Adc, 1,2, -1.79966); setElement(Adc, 1,3,  1.13056); setElement(Adc, 1,4, 0.23508);
+    setElement(Adc,1,1, -3.88366); setElement(Adc, 1,2,  0.87240); setElement(Adc, 1,3, -0.15461); setElement(Adc, 1,4, 0.72219);
 
     Bdc = newMatrix(4,2);
-    setElement(Bdc,1,1,   376); setElement(Bdc, 1,2,  -98);
-    setElement(Bdc,2,1,   -94); setElement(Bdc, 2,2,  296);
-    setElement(Bdc,3,1, -1014); setElement(Bdc, 3,2, 1895);
-    setElement(Bdc,4,1,  3053); setElement(Bdc, 4,2, -986);
+    setElement(Bdc,1,1,  0.37621); setElement(Bdc, 1,2, -0.09734);
+    setElement(Bdc,2,1, -0.09308); setElement(Bdc, 2,2,  0.29664);
+    setElement(Bdc,3,1, -1.01334); setElement(Bdc, 3,2,  1.89542);
+    setElement(Bdc,4,1,  3.05338); setElement(Bdc, 4,2, -0.98579);
 
     Cdc = newMatrix(1,4);
-    setElement(Cdc,1,1, -80310); setElement(Cdc, 1,2, -9624); setElement(Cdc, 1,3, -14122); setElement(Cdc, 1,4, -23626);
+    setElement(Cdc,1,1, -80.30915); setElement(Cdc, 1,2, -9.62374); setElement(Cdc, 1,3, -14.12152); setElement(Cdc, 1,4, -23.62599);
 
     Ddc = newMatrix(1,2);
     setElement(Ddc,1,1, 0); setElement(Ddc, 1,2, 0);
@@ -162,7 +162,7 @@ static int test_init(void) {
 }
 
 
-int ctrlcode(u16 currentAngle, u16 currentPosition){
+int ctrlcode(int currentAngle, int currentPosition){
 
     // update y with current sensor readings
     setElement(y, 1, 1, currentAngle);
@@ -178,6 +178,7 @@ int ctrlcode(u16 currentAngle, u16 currentPosition){
     // eq: u = Cdc * x // TODO: change sign
     product(Cdc, x, u);
 
+
     // printk("y: \n");
     // printMatrix(y);
     // printk("x: \n");
@@ -188,10 +189,10 @@ int ctrlcode(u16 currentAngle, u16 currentPosition){
     // convert command matrix u to scalar
     int command;
     getElement(u, 1, 1, &command);
-    //printk("Command u = %d\n", command);
+    printk("Command u = %d\n", command);
 
     // send command
-    setDA_mVolt(1, command/500000); // remove setDA before uncommenting
+    setDA_mVolt(1, -command); // remove setDA before uncommenting
     
     printk("\n");
 

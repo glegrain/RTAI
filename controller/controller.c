@@ -192,14 +192,12 @@ int ctrlcode(u16 currentAngle, u16 currentPosition){
     printMatrix(u);
 
     // convert command matrix u to scalar
-    u16 command;
-    //getElement(u, 1, 1, &command); // TODO: Debug me
-    //command = u->data[0];
-    printk("data u = %x\n", u->data[0]);
+    int command;
+    getElement(u, 1, 1, &command);
     printk("COMMAND u = %x\n", command);
 
     // send command
-    //setDA_mVolt(-command);
+    //setDA_mVolt(-command); // remove setDA before uncommenting
     
 
 

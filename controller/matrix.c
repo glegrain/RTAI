@@ -7,7 +7,7 @@
 typedef struct {
   int rows;
   int cols;
-  u16 * data;
+  int * data;
 } matrix;
 
 #ifndef NULL
@@ -25,20 +25,20 @@ matrix * newMatrix(int rows, int cols) {
   matrix * m = (matrix *) vmalloc(sizeof(matrix));
 
   // hacky alloc
-  //matrix *m = (matrix) {(int) 0, (int) 0, (u16*) [0, 0, 0, 0]};
+  //matrix *m = (matrix) {(int) 0, (int) 0, (int*) [0, 0, 0, 0]};
   //matrix *m = (matrix) [0, 0, 0, 0, 0, 0];
 
   // set dimensions
   m->rows = rows;
   m->cols = cols;
 
-  // allocate a u16 array of length rows * cols
-  m->data = (u16 *) vmalloc(rows*cols*sizeof(u16));
+  // allocate a int array of length rows * cols
+  m->data = (int *) vmalloc(rows*cols*sizeof(int));
   
   // set all data to 0
   int i;
   for (i = 0; i < rows*cols; i++)
-    m->data[i] = (u16) 0;
+    m->data[i] = (int) 0;
 
   return m;
 }
@@ -69,7 +69,7 @@ int deleteMatrix(matrix * mtx) {
 
 //   // copy mtx's data to cp's data
 //   memcpy(cp->data, mtx->data, 
-//          mtx->rows * mtx->cols * sizeof(u16));
+//          mtx->rows * mtx->cols * sizeof(int));
 
 //   return cp;
 // }
@@ -78,7 +78,7 @@ int deleteMatrix(matrix * mtx) {
  * successful, -1 if mtx is NULL, and -2 if row or col are
  * outside of the dimensions of mtx.
  */
-int setElement(matrix * mtx, int row, int col, u16 val) 
+int setElement(matrix * mtx, int row, int col, int val) 
 {
   if (!mtx) return -1;
   // assert (mtx->data); // removed for kernel
@@ -96,7 +96,7 @@ int setElement(matrix * mtx, int row, int col, u16 val)
  * the dimensions of mtx.
  */
 int getElement(matrix * mtx, int row, int col, 
-               u16 * val) {
+               int * val) {
   if (!mtx || !val) return -1;
   // assert (mtx->data); // removed for kernel
   if (row <= 0 || row > mtx->rows ||
@@ -138,7 +138,7 @@ int printMatrix(matrix * mtx) {
       //  - either a - if negative or a space if positive
       //  - at least 3 spaces before the .
       //  - precision to the hundredths place
-      //printk("% 6.2f ", ELEM(mtx, row, col)); // double changed to u16
+      //printk("% 6.2f ", ELEM(mtx, row, col)); // double changed to int
       printk("%d ", ELEM(mtx, row, col));
     }
     // separate rows by newlines
@@ -199,7 +199,7 @@ int product(matrix * mtx1, matrix * mtx2, matrix * prod) {
   int row, col, k;
   for (col = 1; col <= mtx2->cols; col++)
     for (row = 1; row <= mtx1->rows; row++) {
-      u16 val = 0.0;
+      int val = 0.0;
       for (k = 1; k <= mtx1->cols; k++)
         val += ELEM(mtx1, row, k) * ELEM(mtx2, k, col);
       ELEM(prod, row, col) = val;
@@ -213,7 +213,7 @@ int product(matrix * mtx1, matrix * mtx2, matrix * prod) {
  * vector, and -3 if the vectors are of incompatible 
  * dimensions.
  */
-int dotProduct(matrix * v1, matrix * v2, u16 * prod) {
+int dotProduct(matrix * v1, matrix * v2, int * prod) {
   if (!v1 || !v2 || !prod) return -1;
   if (v1->cols != 1 || v2->cols != 1) return -2;
   if (v1->rows != v2->rows) return -3;

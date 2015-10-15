@@ -31,15 +31,19 @@ matrix *Adc, *Bdc, *Cdc, *Ddc;
 matrix *x, *y, *u;
 matrix *tmp4x4_1, *tmp4x4_2;
 
-u16 currentAngle, currentPosition;
+int currentAngle, currentPosition;
 
 static RT_TASK sens_task, act_task, pid_task;
 int ctrlcode(u16 currentAngle, u16 currentPosition);
 SEM sensDone;
 RTIME now; // tasks start time
 
-int raw2mRad(int raw_value) {
+int raw2mRad(u16 raw_value) {
     return 3.845e-1 * raw_value - 782;
+}
+
+int raw2mVolt(u16 raw_value) {
+    return (( (int) readAD() - 2048)*1000)/204.8;
 }
 
 void senscode(int arg) {
@@ -54,7 +58,7 @@ void senscode(int arg) {
         printk("angle = %d mRad\n", currentAngle);
 
         ADRangeSelect(1,8);
-        currentPosition = readAD_mVolt();
+        currentPosition = raw2mVolt(readAD());
         printk("position = %d\n", currentPosition);
 
         printk("\n");
@@ -119,6 +123,11 @@ static int test_init(void) {
     printk("PGM STARTING\n");
 
     init_matrices();
+
+    // write -9 V to channel 1 using DAC
+    setDA_mVolt(1,3000);
+    // write -7 V to channel 2 using DAC
+    setDA_mVolt(2,-7000);
 
     // Create real-time tasks
     ierr = rt_task_init_cpuid(&sens_task,  // task
@@ -191,6 +200,8 @@ int ctrlcode(u16 currentAngle, u16 currentPosition){
 
     // send command
     //setDA_mVolt(-command);
+    
+
 
     return 0;
 }//ctrlcode

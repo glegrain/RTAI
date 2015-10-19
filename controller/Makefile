@@ -7,7 +7,7 @@ obj-m += controller.o
 controller-objs := matrix.o main.o
 
 PATH := /opt/x86_64/gcc/gcc-3.4.4/bin:$(PATH)
-KIT = arcom9.esiee.fr
+KIT = arcom7.esiee.fr
 CURRENT = 2.6.16.14-arcom1
 KDIR = /usr/lib/arcom/lib/modules/${CURRENT}/build
 PWD = $(shell pwd)
@@ -24,6 +24,7 @@ clean:
 	-rm -r .tmp*
 	-rm *.ko
 send:
+	ssh arcom@$(KIT) 'rm *'
 	scp *.ko runarcom arcom@$(KIT):/home/arcom
 	ssh arcom@$(KIT) 'chmod +x runarcom'
-	ssh arcom@$(KIT)
+	ssh arcom@$(KIT) './runarcom'

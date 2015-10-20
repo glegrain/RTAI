@@ -1,5 +1,5 @@
-// 0.0.3 2015-10-14
-// controller.c
+// 0.0.4 2015-10-20
+// main.c
 // Guillaume Legrain <guillaume.legrain@edu.esiee.fr>
 // Florian Martin <florian.martin@edu.esiee.fr>
 //
@@ -35,7 +35,7 @@ matrix *tmp4x4_1, *tmp4x4_2;
 float currentAngle, currentPosition;
 
 static RT_TASK sens_task, act_task, pid_task;
-int ctrlcode(float currentAngle, float currentPosition);
+int ctrlcode(float currentAngle_rad, float currentPosition_volt);
 SEM sensDone;
 RTIME now; // tasks start time
 
@@ -109,7 +109,7 @@ static void init_matrices(void) {
     setElement(Adc,2,1,  0.09708); setElement(Adc, 2,2,  0.70384); setElement(Adc, 2,3,  0.01065); setElement(Adc, 2,4, 0.00118);
     setElement(Adc,3,1,  1.81243); setElement(Adc, 3,2, -1.79966); setElement(Adc, 3,3,  1.13056); setElement(Adc, 3,4, 0.23508);
     setElement(Adc,4,1, -3.88366); setElement(Adc, 4,2,  0.87240); setElement(Adc, 4,3, -0.15461); setElement(Adc, 4,4, 0.72219);
-    
+
     // printk("Adc init:\n");
     // printMatrix(Adc);
     // printk("dim Adc: %d x %d\n", Adc->rows, Adc->cols);
@@ -188,16 +188,14 @@ static int test_init(void) {
 }
 
 
-int ctrlcode(float currentAngle2, float currentPosition2){
-    printk("TOTO1: \n");
+int ctrlcode(float currentAngle_rad, float currentPosition_volt){
     // update y with current sensor readings
-    setElement(y, 1, 1, currentAngle2);
-    setElement(y, 2, 1, currentPosition2);
+    setElement(y, 1, 1, currentAngle_rad);
+    setElement(y, 2, 1, currentPosition_volt);
 
     // update state
     // eq: x = Adc * x + Bdc * y
     product(Adc, x, tmp4x4_1);
-    printk("TOTO2: \n");
     product(Bdc, y, tmp4x4_2);
     sum(tmp4x4_1, tmp4x4_2, x);
 
@@ -218,14 +216,14 @@ int ctrlcode(float currentAngle2, float currentPosition2){
     // printk("u: \n");
     // printMatrix(u);
 
-    // convert command matrix u to scalar
-    float command = u->data[0];
+    // convert command matrix u to scalar in mVolt
+    float command_mVolt = - u->data[0] * 1000;
     //getElement(u, 1, 1, &command);
-    printk("Command u = %d, 0x%x\n", (int) (command*1000), command);
+    printk("Command u = %d, 0x%x\n", (int) command, command);
 
     // send command
-    setDA_mVolt(1, -command); // remove setDA before uncommenting
-    
+    setDA_mVolt(1, command);
+
     printk("\n");
 
     return 0;

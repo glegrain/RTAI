@@ -22,7 +22,7 @@ MODULE_LICENSE("GPL");
 
 // Scheduling parameters
 #define STACK_SIZE  2000
-#define PERIOD      100000000   //  100 ms // MATLAB peeriod = 0.010
+#define PERIOD      10000000   //  10 ms // MATLAB peeriod = 0.010
 //#define PERIOD      50000000   //  50 ms
 //#define PERIOD      1000000000  //  1s // for debug
 #define TICK_PERIOD 1000000     //  1 ms
@@ -39,8 +39,8 @@ int ctrlcode(float currentAngle_rad, float currentPosition_volt);
 SEM sensDone;
 RTIME now; // tasks start time
 
-int raw2mRad(u16 raw_value) {
-    return 3.845e-1 * raw_value - 782;
+float raw2Rad(u16 raw_value) {
+    return 3.845e-4 * (int) raw_value - 0.782;
 }
 
 int raw2mVolt(u16 raw_value) {
@@ -55,12 +55,13 @@ void senscode(int arg) {
         printk("[sens_task] time: %llu ns\n", count2nano(t - now));
         /* sensor acquisition code */
         ADRangeSelect(0,8);
-        currentAngle = raw2mRad(readAD()) / 1000.0;
-        printk("angle = %d mRad\n", (int) currentAngle);
+        currentAngle = raw2Rad(readAD());
+        currentAngle = raw2Rad(readAD());
+        printk("angle = %d mRad\n", (int) (currentAngle*1000));
 
         ADRangeSelect(1,8);
         currentPosition = raw2mVolt(readAD()) / 1000.0;
-        printk("position = %d\n", (int) currentPosition);
+        printk("position = %d\n", (int) (currentPosition*1000));
 
         printk("\n");
 
@@ -82,7 +83,7 @@ void actcode(int arg) {
         printk("[act_task] time: %llu ms\n", count2nano(t - now));
         /* controller code */
         ctrlcode(currentAngle, currentPosition);
-        //ctrlcode(0.1, 0.0);
+        //ctrlcode(0.1, 1.0);
         /* end of controller code */
         t_old = t;
     }
@@ -190,8 +191,8 @@ static int test_init(void) {
 
 int ctrlcode(float currentAngle_rad, float currentPosition_volt){
     // update y with current sensor readings
-    setElement(y, 2, 1, currentAngle_rad);
-    setElement(y, 1, 1, currentPosition_volt);
+    setElement(y, 1, 1, currentAngle_rad);
+    setElement(y, 2, 1, currentPosition_volt);
 
     // update state
     // eq: x = Adc * x + Bdc * y

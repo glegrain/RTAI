@@ -190,8 +190,8 @@ static int test_init(void) {
 
 int ctrlcode(float currentAngle_rad, float currentPosition_volt){
     // update y with current sensor readings
-    setElement(y, 1, 1, currentAngle_rad);
-    setElement(y, 2, 1, currentPosition_volt);
+    setElement(y, 2, 1, currentAngle_rad);
+    setElement(y, 1, 1, currentPosition_volt);
 
     // update state
     // eq: x = Adc * x + Bdc * y
@@ -219,10 +219,10 @@ int ctrlcode(float currentAngle_rad, float currentPosition_volt){
     // convert command matrix u to scalar in mVolt
     float command_mVolt = - u->data[0] * 1000;
     //getElement(u, 1, 1, &command);
-    printk("Command u = %d, 0x%x\n", (int) command, command);
+    printk("Command u = %d, 0x%x\n", (int) command_mVolt, command_mVolt);
 
     // send command
-    setDA_mVolt(1, command);
+    setDA_mVolt(1, command_mVolt);
 
     printk("\n");
 

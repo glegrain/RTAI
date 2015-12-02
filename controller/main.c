@@ -18,6 +18,7 @@ MODULE_LICENSE("GPL");
 #include "matrix.h"
 #include "3712.h"
 #include "3718.h"
+// #include "controller.h"
 
 
 // Scheduling parameters
@@ -32,7 +33,9 @@ matrix *Adc, *Bdc, *Cdc, *Ddc;
 matrix *x, *y, *u;
 matrix *tmp4x4_1, *tmp4x4_2;
 
-float currentAngle, currentPosition;
+float currentAngle_raw, currentPosition_raw;
+float currentAngle_volt, currentPosition_volt;
+float currentAngle_rad, currentPosition_m;
 
 static RT_TASK sens_task, act_task, pid_task;
 int ctrlcode(float currentAngle_rad, float currentPosition_volt);
@@ -55,18 +58,36 @@ void senscode(int arg) {
         printk("[sens_task] time: %llu ns\n", count2nano(t - now));
         /* sensor acquisition code */
         ADRangeSelect(0,8);
-        currentAngle = raw2Rad(readAD());
-        currentAngle = raw2Rad(readAD());
-        printk("angle = %d mRad\n", (int) (currentAngle*1000));
+        //currentAngle_raw = readAD();
+        currentAngle_raw = readAD();
+        //printk("angle = %d (0x%x)\n", (int) currentAngle_raw, (int) currentAngle_raw);
+        //printk("angle = %d mRad\n", (int) (raw2Rad(currentAngle_raw*1000)));
 
         ADRangeSelect(1,8);
-        currentPosition = raw2mVolt(readAD()) / 1000.0;
-        printk("position = %d\n", (int) (currentPosition*1000));
+        //currentPosition_raw = readAD();
+        currentPosition_raw = readAD();
+        //printk("position = %d (0x%x)\n", (int) currentPosition_raw, (int) currentPosition_raw);
+        //printk("position = %d\n", (int) (currentPosition_raw*1000));
 
-        printk("\n");
+        //printk("\n");
 
         // signal end of acquisition, ready for control
         rt_sem_signal(&sensDone);
+	// u16 command_u16 = control(currentAngle_raw, currentPosition_raw);
+	//currentAngle_rad = 0.0; //DEBUG
+	//currentPosition_m = 0.0; //DEBUG
+	
+	// currentPosition_volt = currentPosition_raw * 0.087;
+	currentPosition_m = currentPosition_raw * 1.0/4096 - 0.5;
+	currentAngle_volt = 0.00244141*(currentAngle_raw - 2048);
+	currentAngle_rad = currentAngle_volt * 0.087; 	
+
+	// printk("Position_volt = %d.\n",(int)(currentPosition_volt));
+	// printk("Position_cm = %d.\n",(int)(currentPosition_m*100));
+	// printk("Angle_rad*1000 = %d.\n", (int) (currentAngle_rad*1000));
+	// printk("angle_degre : %d.\n",(int)((currentAngle_rad*180)/3.14));
+
+	ctrlcode(currentAngle_rad, currentPosition_m);
 
         /* end of sensor acquisition code */
         t_old = t;
@@ -82,7 +103,8 @@ void actcode(int arg) {
         t = rt_get_time();
         printk("[act_task] time: %llu ms\n", count2nano(t - now));
         /* controller code */
-        ctrlcode(currentAngle, currentPosition);
+        //ctrlcode(currentAngle, currentPosition);
+    	//setDA_raw(1, (int) command_u16);
         //ctrlcode(0.1, 1.0);
         /* end of controller code */
         t_old = t;
@@ -146,8 +168,6 @@ static int test_init(void) {
     rt_set_oneshot_mode();
 
     printk("PGM STARTING\n");
-    float testVar = 1.234;
-    printk("testVar = %d, 0x%x\n", (int) testVar, testVar);
 
     init_matrices();
 
@@ -181,7 +201,7 @@ static int test_init(void) {
         now = rt_get_time();
         // Start tasks
         rt_task_make_periodic(&sens_task, now,  nano2count(PERIOD));
-        rt_task_resume(&act_task);
+        //rt_task_resume(&act_task);
 
     }
     //return ierr;
@@ -189,10 +209,10 @@ static int test_init(void) {
 }
 
 
-int ctrlcode(float currentAngle_rad, float currentPosition_volt){
+int ctrlcode(float currentAngle_rad, float currentPosition_m){
     // update y with current sensor readings
     setElement(y, 1, 1, currentAngle_rad);
-    setElement(y, 2, 1, currentPosition_volt);
+    setElement(y, 2, 1, currentPosition_m);
 
     // update state
     // eq: x = Adc * x + Bdc * y

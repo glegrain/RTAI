@@ -2,12 +2,13 @@
 obj-m += 3718.o
 obj-m += 3712.o
 obj-m += matrix.o
+#obj-m += controller.o
 obj-m += main.o
 obj-m += controller.o
 controller-objs := matrix.o main.o
 
 PATH := /opt/x86_64/gcc/gcc-3.4.4/bin:$(PATH)
-KIT = arcom7.esiee.fr
+KIT = arcom19.esiee.fr
 CURRENT = 2.6.16.14-arcom1
 KDIR = /usr/lib/arcom/lib/modules/${CURRENT}/build
 PWD = $(shell pwd)
